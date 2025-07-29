@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChipSplit - Poker Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+            /* Default Light Mode Colors */
+            --bg-body: #f3f4f6; /* gray-100 */
+            --bg-card: #ffffff; /* white */
+            --text-primary: #1f2937; /* gray-800 */
+            --text-secondary: #4b5563; /* gray-700 */
+            --text-tertiary: #6b7280; /* gray-600 */
+            --border-light: #e5e7eb; /* gray-200 */
+            --border-medium: #d1d5db; /* gray-300 */
+
+            /* Accent Colors */
+            --color-blue: #2563eb; /* blue-600 */
+            --color-green: #16a34a; /* green-600 */
+            --color-red: #dc2626;  /* red-600 */
+            --color-indigo: #4f46e5; /* indigo-600 */
+            --color-orange: #f97316; /* orange-500 */
+            --color-tab-hover: #3b82f6; /* blue-500 */
+            --color-tab-active-bg: #eff6ff; /* blue-50 */
+        }
+
+        /* Dark Mode Colors (applied when body has 'dark-mode' class) */
+        body.dark-mode {
+            --bg-body: #111827; /* gray-900 */
+            --bg-card: #1f2937; /* gray-800 */
+            --text-primary: #f9fafb; /* gray-50 */
+            --text-secondary: #d1d5db; /* gray-300 */
+            --text-tertiary: #9ca3af; /* gray-400 */
+            --border-light: #374151; /* gray-700 */
+            --border-medium: #4b5563; /* gray-600 */
+
+            /* Dark Mode Accent Colors (often lighter for contrast) */
+            --color-blue: #60a5fa; /* blue-400 */
+            --color-green: #4ade80; /* green-400 */
+            --color-red: #f87171;  /* red-400 */
+            --color-indigo: #818cf8; /* indigo-400 */
+            --color-orange: #fbbf24; /* amber-400 */
+            --color-tab-hover: #60a5fa; /* blue-400 */
+            --color-tab-active-bg: #1e3a8a; /* blue-900 for dark mode tab bg */
+        }
+
+        /* Important: These override Tailwind's default color classes for the main elements. */
+        /* For elements using these, Tailwind's classes are effectively replaced by CSS variables. */
+        .bg-gray-100 { background-color: var(--bg-body); }
+        .bg-white { background-color: var(--bg-card); }
+        .text-gray-800 { color: var(--text-primary); }
+        .text-gray-700 { color: var(--text-secondary); }
+        .text-gray-600 { color: var(--text-tertiary); }
+        .text-gray-500 { color: var(--text-tertiary); } /* Using tertiary for italic messages */
+        .border-gray-200 { border-color: var(--border-light); }
+        .border-gray-300 { border-color: var(--border-medium); }
+
+        /* Existing screen transition styles */
+        .screen-transition {
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .screen-transition.hidden {
+            opacity: 0;
+            transform: translateY(10px);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4" style="background-color: var(--bg-body);">
+
+    <button id="themeToggleButton" class="absolute top-4 right-4 p-2 rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <svg id="moonIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+        </svg>
+        <svg id="sunIcon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h1m-1 0h-1M4.22 4.22l-.707-.707M19.78 19.78l-.707-.707M4.22 19.78l-.707.707M19.78 4.22l-.707-.707M18 12a6 6 0 11-12 0 6 6 0 0112 0z"></path>
+        </svg>
+    </button>
+
+    <div id="homeScreen" class="p-8 rounded-lg shadow-xl w-full max-w-md mx-auto flex flex-col items-center justify-center screen-transition" style="background-color: var(--bg-card);">
+        <h1 class="text-4xl font-extrabold mb-6 text-center" style="color: var(--text-primary);">
+            ChipSplit
+        </h1>
+        <p class="text-lg mb-8 text-center" style="color: var(--text-tertiary);">
+            Your simple poker chip tracker.
+        </p>
+        <button id="newGameButton" class="mt-8 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-xl shadow-lg transition duration-300 ease-in-out text-xl">
+            Start New Game
+        </button>
+    </div>
+
+    <div id="newGameSetupScreen" class="p-8 rounded-lg shadow-xl w-full max-w-md mx-auto hidden screen-transition" style="background-color: var(--bg-card);">
+        <h2 class="text-3xl font-bold mb-6 text-center" style="color: var(--text-primary);">
+            Setup New Game
+        </h2>
+        
+        <div class="mb-6">
+            <label for="gameNameInput" class="block text-sm font-bold mb-2" style="color: var(--text-secondary);">
+                Game Name (Optional):
+            </label>
+            <input 
+                type="text" 
+                id="gameNameInput" 
+                class="shadow appearance-none border rounded w-full py-3 px-4 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg" 
+                placeholder="e.g., Friday Night Poker"
+                style="background-color: var(--bg-card); color: var(--text-primary); border-color: var(--border-light); --tw-ring-color: var(--color-blue);"
+            >
+        </div>
+
+        <div class="mb-6 mt-6">
+            <label for="playerNameInput" class="block text-sm font-bold mb-2" style="color: var(--text-secondary);">
+                Add Player:
+            </label>
+            <div class="flex space-x-2">
+                <input 
+                    type="text" 
+                    id="playerNameInput" 
+                    class="shadow appearance-none border rounded w-full py-3 px-4 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg" 
+                    placeholder="Player Name"
+                    style="background-color: var(--bg-card); color: var(--text-primary); border-color: var(--border-light); --tw-ring-color: var(--color-blue);"
+                >
+                <button id="addPlayerButton" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md transition duration-300 ease-in-out">
+                    Add
+                </button>
+            </div>
+        </div>
+
+        <div id="playersList" class="p-4 rounded-lg border min-h-[100px] mb-6" style="background-color: var(--bg-body); border-color: var(--border-light);">
+            <p id="noPlayersMessage" class="italic text-center" style="color: var(--text-tertiary);">No players added yet.</p>
+            </div>
+
+        <p class="text-sm mb-4" style="color: var(--text-tertiary);">
+            Current Date: <span id="currentDateDisplay" class="font-semibold"></span>
+        </p>
+        
+        <button id="startGameButton" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition duration-300 ease-in-out text-xl">
+            Add Players
+        </button>
+
+        <button id="backToHomeButton" class="mt-4 w-full bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 px-6 rounded-xl shadow-md transition duration-300 ease-in-out text-xl">
+            Back
+        </button>
+    </div>
+
+    <div id="gamePlayScreen" class="p-8 rounded-lg shadow-xl w-full max-w-md mx-auto hidden screen-transition" style="background-color: var(--bg-card);">
+        <h2 id="gameTitleDisplay" class="text-3xl font-bold mb-4 text-center" style="color: var(--text-primary);">
+            Game Name Here
+        </h2>
+        <p class="text-sm mb-6 text-center" style="color: var(--text-tertiary);">
+            <span id="gameDateDisplay" class="font-semibold"></span>
+        </p>
+
+        <div id="gamePlayersList" class="mb-8">
+            <h3 class="text-xl font-semibold mb-4" style="color: var(--text-secondary);">Players:</h3>
+            <p id="noPlayersGameMessage" class="italic text-center" style="color: var(--text-tertiary);">No players in this game.</p>
+        </div>
+
+        <div class="border-t pt-6 mt-6" style="border-color: var(--border-light);">
+            <h3 class="text-xl font-semibold mb-4" style="color: var(--text-secondary);">Game Totals:</h3>
+            <div class="flex justify-between items-center mb-2">
+                <span class="font-medium" style="color: var(--text-secondary);">Total Buy-ins:</span>
+                <span id="totalMoneyInDisplay" class="text-lg font-bold" style="color: var(--color-green);">$0.00</span>
+            </div>
+            <div class="flex justify-between items-center mb-2">
+                <span class="font-medium" style="color: var(--text-secondary);">Total Cash-outs:</span>
+                <span id="totalMoneyOutDisplay" class="text-lg font-bold" style="color: var(--color-red);">$0.00</span>
+            </div>
+            <div class="flex justify-between items-center border-t pt-2 mt-2" style="border-color: var(--border-medium);">
+                <span class="font-bold text-lg" style="color: var(--text-primary);">Pot Difference:</span>
+                <span id="potDifferenceDisplay" class="text-xl font-extrabold" style="color: var(--color-blue);">$0.00</span>
+            </div>
+        </div>
+
+        <button id="finishGameButton" class="mt-8 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 px-6 rounded-xl shadow-lg transition duration-300 ease-in-out text-xl">
+            Finish Game & See Payouts
+        </button>
+
+        <button id="backToSetupButton" class="mt-4 w-full bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 px-6 rounded-xl shadow-md transition duration-300 ease-in-out text-xl">
+            Back to Setup
+        </button>
+    </div>
+
+    <div id="payoutSummaryScreen" class="p-8 rounded-lg shadow-xl w-full max-w-md mx-auto hidden screen-transition" style="background-color: var(--bg-card);">
+        <h2 class="text-3xl font-bold mb-6 text-center" style="color: var(--text-primary);">
+            Game Summary
+        </h2>
+
+        <div class="flex border-b mb-6" style="border-color: var(--border-light);">
+            <button id="gamePayoutsTabBtn" class="py-3 px-6 text-lg font-semibold border-b-2 border-transparent hover:border-blue-500 hover:text-blue-600 transition duration-150 ease-in-out focus:outline-none flex-1" style="color: var(--text-tertiary);">
+                Player Results
+            </button>
+            <button id="simplifyPayoutsTabBtn" class="py-3 px-6 text-lg font-semibold border-b-2 border-transparent hover:border-blue-500 hover:text-blue-600 transition duration-150 ease-in-out focus:outline-none flex-1" style="color: var(--text-tertiary);">
+                Simplify Payouts
+            </button>
+        </div>
+
+        <div id="playerResultsContent" class="">
+            <div id="payoutsList" class="mb-8">
+                <h3 class="text-xl font-semibold mb-4" style="color: var(--text-secondary);">Player Net Results:</h3>
+                <p id="noPayoutsMessage" class="italic text-center" style="color: var(--text-tertiary);">No payouts to display.</p>
+                </div>
+
+            <div class="border-t pt-6 mt-6" style="border-color: var(--border-light);">
+                <h3 class="text-xl font-semibold mb-4" style="color: var(--text-secondary);">Game Totals:</h3>
+                <div class="flex justify-between items-center mb-2">
+                    <span class="font-medium" style="color: var(--text-secondary);">Total Money In:</span>
+                    <span id="summaryTotalMoneyIn" class="text-lg font-bold" style="color: var(--color-green);">$0.00</span>
+                </div>
+                <div class="flex justify-between items-center mb-2">
+                    <span class="font-medium" style="color: var(--text-secondary);">Total Money Out:</span>
+                    <span id="summaryTotalMoneyOut" class="text-lg font-bold" style="color: var(--color-red);">$0.00</span>
+                </div>
+                <div class="flex justify-between items-center border-t pt-2 mt-2" style="border-color: var(--border-medium);">
+                    <span class="font-bold text-lg" style="color: var(--text-primary);">Pot Difference:</span>
+                    <span id="summaryPotDifference" class="text-xl font-extrabold" style="color: var(--color-blue);">$0.00</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="simplifiedPayoutsContent" class="hidden">
+            <h3 class="text-xl font-semibold mb-4" style="color: var(--text-secondary);">Minimal Transactions:</h3>
+            <div id="simplifiedTransactionsList" class="mb-8 p-4 rounded-lg border min-h-[100px]" style="background-color: var(--bg-body); border-color: var(--border-light);">
+                <p id="noSimplifiedPayoutsMessage" class="italic text-center" style="color: var(--text-tertiary);">No transactions needed, or no players added.</p>
+                </div>
+        </div>
+
+        <button id="newGameFromPayoutsButton" class="mt-8 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-xl shadow-lg transition duration-300 ease-in-out text-xl">
+            Start New Game
+        </button>
+
+        <button id="backToGamePlayButton" class="mt-4 w-full bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 px-6 rounded-xl shadow-md transition duration-300 ease-in-out text-xl">
+            Back to Game
+        </button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- Get References to Elements (Existing) ---
+            const homeScreen = document.getElementById('homeScreen');
+            const newGameSetupScreen = document.getElementById('newGameSetupScreen');
+            const newGameButton = document.getElementById('newGameButton');
+            const startGameButton = document.getElementById('startGameButton');
+            const backToHomeButton = document.getElementById('backToHomeButton'); // Back from setup
+            const currentDateDisplay = document.getElementById('currentDateDisplay');
+            const gameNameInput = document.getElementById('gameNameInput');
+
+            // Player-related elements on Setup Screen
+            const playerNameInput = document.getElementById('playerNameInput');
+            const addPlayerButton = document.getElementById('addPlayerButton');
+            const playersList = document.getElementById('playersList'); // Player list on setup screen
+            const noPlayersMessage = document.getElementById('noPlayersMessage'); // "No players" on setup screen
+
+            // --- Get References to Elements (Game Play Screen) ---
+            const gamePlayScreen = document.getElementById('gamePlayScreen');
+            const gameTitleDisplay = document.getElementById('gameTitleDisplay');
+            const gameDateDisplay = document.getElementById('gameDateDisplay');
+            const gamePlayersList = document.getElementById('gamePlayersList'); // Player list on game play screen
+            const noPlayersGameMessage = document.getElementById('noPlayersGameMessage'); // "No players" on game play screen
+            const totalMoneyInDisplay = document.getElementById('totalMoneyInDisplay');
+            const totalMoneyOutDisplay = document.getElementById('totalMoneyOutDisplay');
+            const potDifferenceDisplay = document.getElementById('potDifferenceDisplay');
+            const finishGameButton = document.getElementById('finishGameButton');
+            const backToSetupButton = document.getElementById('backToSetupButton'); // Back from game play
+
+            // --- Get References to Elements (Payout Summary Screen) ---
+            const payoutSummaryScreen = document.getElementById('payoutSummaryScreen');
+            const gamePayoutsTabBtn = document.getElementById('gamePayoutsTabBtn');
+            const simplifyPayoutsTabBtn = document.getElementById('simplifyPayoutsTabBtn');
+            const playerResultsContent = document.getElementById('playerResultsContent');
+            const simplifiedPayoutsContent = document.getElementById('simplifiedPayoutsContent');
+
+            const payoutsList = document.getElementById('payoutsList'); // Inside playerResultsContent
+            const noPayoutsMessage = document.getElementById('noPayoutsMessage'); // Inside playerResultsContent
+            const summaryTotalMoneyIn = document.getElementById('summaryTotalMoneyIn'); // Inside playerResultsContent
+            const summaryTotalMoneyOut = document.getElementById('summaryTotalMoneyOut'); // Inside playerResultsContent
+            const summaryPotDifference = document.getElementById('summaryPotDifference'); // Inside playerResultsContent
+
+            const simplifiedTransactionsList = document.getElementById('simplifiedTransactionsList'); // Inside simplifiedPayoutsContent
+            const noSimplifiedPayoutsMessage = document.getElementById('noSimplifiedPayoutsMessage'); // Inside simplifiedPayoutsContent
+            const newGameFromPayoutsButton = document.getElementById('newGameFromPayoutsButton');
+            const backToGamePlayButton = document.getElementById('backToGamePlayButton');
+
+            // --- NEW: Dark Mode Elements ---
+            const themeToggleButton = document.getElementById('themeToggleButton');
+            const moonIcon = document.getElementById('moonIcon');
+            const sunIcon = document.getElementById('sunIcon');
+
+            // --- Data Model ---
+            let players = []; // Stores our player objects {name, buyIn, cashOut, netProfitLoss}
+            let currentGame = {
+                name: '',
+                date: '',
+                players: [] // Reference to the 'players' array
+            };
+
+            // --- Helper Functions ---
+
+            // Function to format currency
+            function formatCurrency(amount) {
+                return '$' + amount.toFixed(2);
+            }
+
+            // --- NEW: Dark Mode Logic ---
+            function applyTheme(theme) {
+                document.body.classList.toggle('dark-mode', theme === 'dark');
+                moonIcon.classList.toggle('hidden', theme === 'dark');
+                sunIcon.classList.toggle('hidden', theme === 'light');
+                localStorage.setItem('theme', theme);
+            }
+
+            function toggleTheme() {
+                const currentTheme = localStorage.getItem('theme') || 'light';
+                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                applyTheme(newTheme);
+            }
+
+            // Initial theme application based on localStorage or system preference
+            function initializeTheme() {
+                const savedTheme = localStorage.getItem('theme');
+                if (savedTheme) {
+                    applyTheme(savedTheme);
+                } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    applyTheme('dark');
+                } else {
+                    applyTheme('light');
+                }
+            }
+
+            // --- Core Game Logic Functions ---
+
+            // Calculates an individual player's net profit/loss
+            function calculatePlayerNet(player) {
+                player.netProfitLoss = player.cashOut - player.buyIn;
+                // Update the display for this specific player if they are currently rendered
+                const playerNetSpan = document.querySelector(`.player-net-display[data-player-id="${player.id}"]`);
+                if (playerNetSpan) {
+                    playerNetSpan.textContent = formatCurrency(player.netProfitLoss);
+                    // Use style to apply color based on variable
+                    if (player.netProfitLoss > 0) {
+                        playerNetSpan.style.color = 'var(--color-green)';
+                    } else if (player.netProfitLoss < 0) {
+                        playerNetSpan.style.color = 'var(--color-red)';
+                    } else {
+                        playerNetSpan.style.color = 'var(--text-secondary)'; // Neutral color
+                    }
+                }
+            }
+
+            // Calculates and updates game totals on the game play screen
+            function updateGameTotals() {
+                let totalBuyIn = 0;
+                let totalCashOut = 0;
+
+                players.forEach(player => {
+                    totalBuyIn += player.buyIn;
+                    totalCashOut += player.cashOut;
+                });
+
+                const potDifference = totalCashOut - totalBuyIn;
+
+                totalMoneyInDisplay.textContent = formatCurrency(totalBuyIn);
+                totalMoneyInDisplay.style.color = 'var(--color-green)'; // Apply variable
+                totalMoneyOutDisplay.textContent = formatCurrency(totalCashOut);
+                totalMoneyOutDisplay.style.color = 'var(--color-red)'; // Apply variable
+                potDifferenceDisplay.textContent = formatCurrency(potDifference);
+
+                // Update color for pot difference display
+                potDifferenceDisplay.style.color = ''; // Reset style before applying new one
+                if (potDifference !== 0) {
+                    potDifferenceDisplay.style.color = 'var(--color-orange)';
+                } else {
+                    potDifferenceDisplay.style.color = 'var(--color-blue)';
+                }
+            }
+
+            // Simplify Payouts Algorithm
+            function simplifyPayouts(playersData) {
+                const transactions = [];
+
+                const debtors = playersData
+                    .filter(p => p.netProfitLoss < 0)
+                    .map(p => ({ name: p.name, amount: Math.abs(p.netProfitLoss * 100) })); 
+                
+                const creditors = playersData
+                    .filter(p => p.netProfitLoss > 0)
+                    .map(p => ({ name: p.name, amount: p.netProfitLoss * 100 })); 
+
+                debtors.sort((a, b) => b.amount - a.amount); 
+                creditors.sort((a, b) => b.amount - a.amount); 
+
+                let i = 0; 
+                let j = 0; 
+
+                while (i < debtors.length && j < creditors.length) {
+                    const debtor = debtors[i];
+                    const creditor = creditors[j];
+
+                    const amountToTransfer = Math.min(debtor.amount, creditor.amount);
+
+                    if (amountToTransfer > 0) {
+                        transactions.push({
+                            from: debtor.name,
+                            to: creditor.name,
+                            amount: amountToTransfer / 100
+                        });
+                    }
+
+                    debtor.amount -= amountToTransfer;
+                    creditor.amount -= amountToTransfer;
+
+                    const epsilon = 0.0001; 
+                    if (debtor.amount < epsilon) {
+                        i++;
+                    }
+                    if (creditor.amount < epsilon) {
+                        j++;
+                    }
+                }
+                return transactions;
+            }
+
+            // --- Rendering Functions ---
+
+            // Renders players list on the Setup Screen
+            function renderPlayersSetupScreen() {
+                playersList.innerHTML = '';
+                noPlayersMessage.classList.toggle('hidden', players.length > 0); 
+                noPlayersMessage.style.color = 'var(--text-tertiary)'; // Apply variable
+
+                players.forEach((player, index) => {
+                    const playerDiv = document.createElement('div');
+                    playerDiv.className = 'flex items-center justify-between p-2 mb-1 rounded-lg shadow-sm border';
+                    playerDiv.style.backgroundColor = 'var(--bg-card)';
+                    playerDiv.style.borderColor = 'var(--border-light)';
+                    playerDiv.style.color = 'var(--text-primary)';
+                    playerDiv.innerHTML = `
+                        <span class="font-medium text-lg">${player.name}</span>
+                        <button data-index="${index}" class="remove-player-btn text-red-500 hover:text-red-700 font-semibold text-sm ml-2">Remove</button>
+                    `;
+                    playersList.appendChild(playerDiv);
+                });
+
+                document.querySelectorAll('.remove-player-btn').forEach(button => {
+                    // Ensure the red color uses the variable
+                    button.style.color = 'var(--color-red)';
+                    
+                    button.addEventListener('click', function() {
+                        const indexToRemove = parseInt(this.dataset.index);
+                        removePlayer(indexToRemove);
+                        renderPlayersSetupScreen(); 
+                    });
+                });
+            }
+
+            // Function to add a player to our 'players' array
+            function addPlayer() {
+                const name = playerNameInput.value.trim(); 
+
+                if (name) { 
+                    const isDuplicate = players.some(player => player.name.toLowerCase() === name.toLowerCase());
+                    if (isDuplicate) {
+                        alert('Player with this name already exists!');
+                        return; 
+                    }
+
+                    players.push({ 
+                        name: name, 
+                        buyIn: 0, 
+                        cashOut: 0,
+                        netProfitLoss: 0 
+                    });
+
+                    playerNameInput.value = ''; 
+                    renderPlayersSetupScreen(); 
+                } else {
+                    alert('Please enter a player name.'); 
+                }
+            }
+
+            // Function to remove a player from our 'players' array
+            function removePlayer(index) {
+                players.splice(index, 1); 
+                renderPlayersSetupScreen(); 
+            }
+
+            // Renders players with inputs on the Game Play Screen
+            function renderGamePlayScreen() {
+                gamePlayersList.innerHTML = ''; 
+                noPlayersGameMessage.classList.toggle('hidden', players.length > 0);
+                noPlayersGameMessage.style.color = 'var(--text-tertiary)'; // Apply variable
+
+                if (players.length === 0) return; 
+
+                players.forEach(player => {
+                    if (!player.id) {
+                        player.id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+                    }
+
+                    const playerRow = document.createElement('div');
+                    playerRow.className = 'p-4 mb-4 rounded-lg shadow-sm border';
+                    playerRow.style.backgroundColor = 'var(--bg-card)';
+                    playerRow.style.borderColor = 'var(--border-light)';
+                    playerRow.innerHTML = `
+                        <h4 class="font-bold text-xl mb-3" style="color: var(--text-primary);">${player.name}</h4>
+                        <div class="grid grid-cols-2 gap-4 mb-3">
+                            <div>
+                                <label for="buyIn-${player.id}" class="block text-sm font-semibold mb-1" style="color: var(--text-secondary);">Buy-in:</label>
+                                <input type="number" id="buyIn-${player.id}" 
+                                    class="w-full shadow appearance-none border rounded py-2 px-3 leading-tight focus:outline-none focus:ring-2 focus:border-transparent text-lg" 
+                                    value="${player.buyIn || 0}" min="0" step="any"
+                                    style="background-color: var(--bg-card); color: var(--text-primary); border-color: var(--border-light); --tw-ring-color: var(--color-blue);"
+                                >
+                            </div>
+                            <div>
+                                <label for="cashOut-${player.id}" class="block text-sm font-semibold mb-1" style="color: var(--text-secondary);">Cash-out:</label>
+                                <input type="number" id="cashOut-${player.id}" 
+                                    class="w-full shadow appearance-none border rounded py-2 px-3 leading-tight focus:outline-none focus:ring-2 focus:border-transparent text-lg" 
+                                    value="${player.cashOut || 0}" min="0" step="any"
+                                    style="background-color: var(--bg-card); color: var(--text-primary); border-color: var(--border-light); --tw-ring-color: var(--color-blue);"
+                                >
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center border-t pt-3" style="border-color: var(--border-light);">
+                            <span class="font-semibold" style="color: var(--text-primary);">Net:</span>
+                            <span class="player-net-display font-bold text-lg" data-player-id="${player.id}" style="color: var(--text-secondary);">${formatCurrency(player.netProfitLoss)}</span>
+                        </div>
+                    `;
+                    gamePlayersList.appendChild(playerRow);
+
+                    const buyInInput = playerRow.querySelector(`#buyIn-${player.id}`);
+                    const cashOutInput = playerRow.querySelector(`#cashOut-${player.id}`);
+
+                    const handleInputChange = () => {
+                        player.buyIn = parseFloat(buyInInput.value) || 0; 
+                        player.cashOut = parseFloat(cashOutInput.value) || 0; 
+                        calculatePlayerNet(player);
+                        updateGameTotals();
+                    };
+
+                    buyInInput.addEventListener('input', handleInputChange);
+                    cashOutInput.addEventListener('input', handleInputChange);
+                });
+                updateGameTotals(); 
+            }
+
+            // Renders player payouts and game totals on the Payout Summary Screen (Player Results Tab)
+            function renderPlayerResultsTab() {
+                payoutsList.innerHTML = ''; 
+                noPayoutsMessage.classList.toggle('hidden', players.length > 0);
+                noPayoutsMessage.style.color = 'var(--text-tertiary)'; // Apply variable
+
+                let totalBuyIn = 0;
+                let totalCashOut = 0;
+
+                players.forEach(player => {
+                    calculatePlayerNet(player); 
+
+                    totalBuyIn += player.buyIn;
+                    totalCashOut += player.cashOut;
+
+                    const payoutDiv = document.createElement('div');
+                    payoutDiv.className = 'flex items-center justify-between p-3 mb-2 rounded-lg shadow-sm border';
+                    payoutDiv.style.backgroundColor = 'var(--bg-card)';
+                    payoutDiv.style.borderColor = 'var(--border-light)';
+                    
+                    let netColorVar = 'var(--text-secondary)'; 
+                    if (player.netProfitLoss > 0) {
+                        netColorVar = 'var(--color-green)'; 
+                    } else if (player.netProfitLoss < 0) {
+                        netColorVar = 'var(--color-red)'; 
+                    }
+
+                    payoutDiv.innerHTML = `
+                        <span class="font-medium text-lg" style="color: var(--text-primary);">${player.name}:</span>
+                        <span class="font-bold text-xl" style="color: ${netColorVar};">${formatCurrency(player.netProfitLoss)}</span>
+                    `;
+                    payoutsList.appendChild(payoutDiv);
+                });
+
+                const potDifference = totalCashOut - totalBuyIn;
+
+                // Update summary totals
+                summaryTotalMoneyIn.textContent = formatCurrency(totalBuyIn);
+                summaryTotalMoneyIn.style.color = 'var(--color-green)';
+                summaryTotalMoneyOut.textContent = formatCurrency(totalCashOut);
+                summaryTotalMoneyOut.style.color = 'var(--color-red)';
+                summaryPotDifference.textContent = formatCurrency(potDifference);
+
+                // Update color for pot difference display on summary
+                summaryPotDifference.style.color = ''; // Reset style
+                if (potDifference !== 0) {
+                    summaryPotDifference.style.color = 'var(--color-orange)'; 
+                } else {
+                    summaryPotDifference.style.color = 'var(--color-blue)'; 
+                }
+
+                // Update static texts within this section
+                document.querySelector('#playerResultsContent h3').style.color = 'var(--text-secondary)';
+                document.querySelector('#playerResultsContent .border-t').style.borderColor = 'var(--border-light)';
+                document.querySelector('#playerResultsContent .border-t h3').style.color = 'var(--text-secondary)';
+                document.querySelectorAll('#playerResultsContent .flex span.font-medium').forEach(el => el.style.color = 'var(--text-secondary)');
+                document.querySelector('#playerResultsContent .flex span.font-bold').style.color = 'var(--text-primary)';
+                document.querySelector('#playerResultsContent .flex span.font-extrabold').style.color = 'var(--text-primary)'; // Primary for total pot difference number
+            }
+
+            // Renders simplified transactions on the Payout Summary Screen (Simplify Payouts Tab)
+            function renderSimplifiedPayoutsTab() {
+                simplifiedTransactionsList.innerHTML = ''; 
+                noSimplifiedPayoutsMessage.classList.remove('hidden'); 
+                noSimplifiedPayoutsMessage.style.color = 'var(--text-tertiary)'; // Apply variable
+                simplifiedTransactionsList.style.backgroundColor = 'var(--bg-body)'; // Match body bg for this container
+                simplifiedTransactionsList.style.borderColor = 'var(--border-light)'; // Apply border variable
+
+                const activePlayers = players.filter(p => p.netProfitLoss !== 0);
+                if (activePlayers.length === 0) {
+                    simplifiedTransactionsList.innerHTML = `<p class="italic text-center" style="color: var(--text-tertiary);">Everyone is settled! No transactions needed.</p>`;
+                    noSimplifiedPayoutsMessage.classList.add('hidden'); 
+                    return;
+                }
+
+                const transactions = simplifyPayouts(players); 
+                
+                if (transactions.length === 0) {
+                    simplifiedTransactionsList.innerHTML = `<p class="italic text-center" style="color: var(--text-tertiary);">Everyone is settled! No transactions needed.</p>`;
+                    noSimplifiedPayoutsMessage.classList.add('hidden'); 
+                    return;
+                }
+
+                noSimplifiedPayoutsMessage.classList.add('hidden'); 
+
+                transactions.forEach(transaction => {
+                    const transactionDiv = document.createElement('div');
+                    transactionDiv.className = 'flex items-center justify-between p-3 mb-2 rounded-lg shadow-sm border';
+                    transactionDiv.style.backgroundColor = 'var(--bg-card)';
+                    transactionDiv.style.borderColor = 'var(--border-light)';
+                    transactionDiv.innerHTML = `
+                        <span class="font-medium" style="color: var(--text-primary);">${transaction.from} pays ${transaction.to}:</span>
+                        <span class="font-bold text-lg" style="color: var(--color-green);">${formatCurrency(transaction.amount)}</span>
+                    `;
+                    simplifiedTransactionsList.appendChild(transactionDiv);
+                });
+
+                // Update static texts within this section
+                document.querySelector('#simplifiedPayoutsContent h3').style.color = 'var(--text-secondary)';
+            }
+
+            // Tab switching function (with NEW active tab styles)
+            function switchTab(tabName) {
+                // Remove active styles from all tabs
+                gamePayoutsTabBtn.classList.remove('font-bold');
+                simplifyPayoutsTabBtn.classList.remove('font-bold');
+                
+                // Re-apply style properties directly using variables for consistency
+                gamePayoutsTabBtn.style.color = 'var(--text-tertiary)';
+                gamePayoutsTabBtn.style.borderColor = 'var(--border-light)';
+                gamePayoutsTabBtn.style.backgroundColor = ''; // Remove active background
+                simplifyPayoutsTabBtn.style.color = 'var(--text-tertiary)';
+                simplifyPayoutsTabBtn.style.borderColor = 'var(--border-light)';
+                simplifyPayoutsTabBtn.style.backgroundColor = ''; // Remove active background
+
+
+                // Hide all content areas
+                playerResultsContent.classList.add('hidden');
+                simplifiedPayoutsContent.classList.add('hidden');
+
+                // Show selected tab content and add active styles
+                if (tabName === 'playerResults') {
+                    gamePayoutsTabBtn.classList.add('font-bold'); // Bold only here
+                    gamePayoutsTabBtn.style.borderColor = 'var(--color-blue)';
+                    gamePayoutsTabBtn.style.color = 'var(--color-blue)';
+                    gamePayoutsTabBtn.style.backgroundColor = 'var(--color-tab-active-bg)';
+                    playerResultsContent.classList.remove('hidden');
+                    renderPlayerResultsTab(); 
+                } else if (tabName === 'simplifiedPayouts') {
+                    simplifyPayoutsTabBtn.classList.add('font-bold'); // Bold only here
+                    simplifyPayoutsTabBtn.style.borderColor = 'var(--color-blue)';
+                    simplifyPayoutsTabBtn.style.color = 'var(--color-blue)';
+                    simplifyPayoutsTabBtn.style.backgroundColor = 'var(--color-tab-active-bg)';
+                    simplifiedPayoutsContent.classList.remove('hidden');
+                    renderSimplifiedPayoutsTab(); 
+                }
+            }
+
+
+            // --- Event Listeners ---
+
+            // NEW: Dark Mode Toggle Button Listener
+            themeToggleButton.addEventListener('click', toggleTheme);
+
+            // Home Screen -> New Game Setup Screen
+            newGameButton.addEventListener('click', function() {
+                homeScreen.classList.add('hidden'); 
+                newGameSetupScreen.classList.remove('hidden'); 
+                
+                const today = new Date();
+                const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                currentDateDisplay.textContent = today.toLocaleDateString(undefined, options);
+                currentDateDisplay.style.color = 'var(--text-tertiary)'; // Apply variable
+
+                players = []; 
+                playerNameInput.value = ''; 
+                gameNameInput.value = ''; 
+                
+                // Set initial styles for inputs using variables
+                gameNameInput.style.color = 'var(--text-primary)';
+                gameNameInput.style.backgroundColor = 'var(--bg-card)';
+                gameNameInput.style.borderColor = 'var(--border-light)';
+                gameNameInput.style.setProperty('--tw-ring-color', 'var(--color-blue)'); // For focus ring
+
+                playerNameInput.style.color = 'var(--text-primary)';
+                playerNameInput.style.backgroundColor = 'var(--bg-card)';
+                playerNameInput.style.borderColor = 'var(--border-light)';
+                playerNameInput.style.setProperty('--tw-ring-color', 'var(--color-blue)'); // For focus ring
+
+
+                // Update static texts on setup screen
+                document.querySelector('#newGameSetupScreen h2').style.color = 'var(--text-primary)';
+                document.querySelector('#newGameSetupScreen label[for="gameNameInput"]').style.color = 'var(--text-secondary)';
+                document.querySelector('#newGameSetupScreen label[for="playerNameInput"]').style.color = 'var(--text-secondary)';
+                document.querySelector('#newGameSetupScreen p.text-sm.mb-4').style.color = 'var(--text-tertiary)'; // Target by specific class to avoid selecting general p tags
+                
+                renderPlayersSetupScreen(); 
+            });
+
+            // Add Player on Setup Screen
+            addPlayerButton.addEventListener('click', addPlayer);
+
+            // Allow adding player by pressing Enter key in the input field
+            playerNameInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') { 
+                    e.preventDefault(); 
+                    addPlayer(); 
+                }
+            });
+
+            // Back to Home from Setup Screen
+            backToHomeButton.addEventListener('click', function() {
+                newGameSetupScreen.classList.add('hidden'); 
+                homeScreen.classList.remove('hidden'); 
+            });
+
+            // Start Game from Setup Screen -> Game Play Screen
+            startGameButton.addEventListener('click', function() {
+                if (players.length === 0) {
+                    alert('Please add at least one player to start the game.');
+                    return;
+                }
+
+                currentGame.name = gameNameInput.value.trim() || 'Unnamed Game';
+                currentGame.date = currentDateDisplay.textContent; 
+                currentGame.players = players; 
+
+                newGameSetupScreen.classList.add('hidden'); 
+                gamePlayScreen.classList.remove('hidden'); 
+
+                gameTitleDisplay.textContent = currentGame.name;
+                gameTitleDisplay.style.color = 'var(--text-primary)';
+                gameDateDisplay.textContent = currentGame.date;
+                gameDateDisplay.style.color = 'var(--text-tertiary)';
+
+                // Update static texts on game play screen
+                document.querySelector('#gamePlayScreen h3').style.color = 'var(--text-secondary)';
+                document.querySelector('#gamePlayScreen .border-t').style.borderColor = 'var(--border-light)';
+                document.querySelector('#gamePlayScreen .border-t h3').style.color = 'var(--text-secondary)';
+                document.querySelectorAll('#gamePlayScreen .flex span.font-medium').forEach(el => el.style.color = 'var(--text-secondary)');
+                document.querySelector('#gamePlayScreen .flex span.font-bold').style.color = 'var(--text-primary)';
+                document.querySelector('#gamePlayScreen .flex span.font-extrabold').style.color = 'var(--text-primary)';
+
+                renderGamePlayScreen(); 
+            });
+
+            // Back to Setup from Game Play Screen
+            backToSetupButton.addEventListener('click', function() {
+                gamePlayScreen.classList.add('hidden'); 
+                newGameSetupScreen.classList.remove('hidden'); 
+                renderPlayersSetupScreen(); 
+            });
+
+            // Game Play Screen -> Payout Summary Screen
+            finishGameButton.addEventListener('click', function() {
+                gamePlayScreen.classList.add('hidden'); 
+                payoutSummaryScreen.classList.remove('hidden'); 
+                
+                // Update static texts on payout summary screen
+                document.querySelector('#payoutSummaryScreen h2').style.color = 'var(--text-primary)';
+                document.querySelector('#payoutSummaryScreen .border-t').style.borderColor = 'var(--border-light)';
+                
+                switchTab('playerResults'); 
+            });
+
+            // Tab button event listeners
+            gamePayoutsTabBtn.addEventListener('click', () => switchTab('playerResults'));
+            simplifyPayoutsTabBtn.addEventListener('click', () => switchTab('simplifiedPayouts'));
+
+            // Back to Game Play from Payout Summary Screen
+            backToGamePlayButton.addEventListener('click', function() {
+                payoutSummaryScreen.classList.add('hidden'); 
+                gamePlayScreen.classList.remove('hidden'); 
+            });
+
+            // Start New Game from Payout Summary Screen (returns to Home Screen)
+            newGameFromPayoutsButton.addEventListener('click', function() {
+                payoutSummaryScreen.classList.add('hidden'); 
+                homeScreen.classList.remove('hidden'); 
+            });
+
+            // Initial calls
+            initializeTheme(); // Initialize theme on load
+            renderPlayersSetupScreen(); 
+        });
+    </script>
+</body>
+</html>
